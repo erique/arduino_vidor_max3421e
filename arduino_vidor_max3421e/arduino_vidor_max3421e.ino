@@ -1,6 +1,20 @@
 #include <stdarg.h>
 #include "usb.h"
 
+void setup() {
+	Serial1.begin(115200);
+	kprintf("\033[2J\n\r");
+	kprintf("=========================================================\n\r");
+	kprintf("arduino vidor max3421e **  %s %s\n\r", __DATE__, __TIME__);
+	kprintf("=========================================================\n\r");
+
+	usb_init();
+}
+
+void loop() {
+	usb_poll();
+}
+
 static char buffer[256];
 extern "C" void kprintstr(const char* str)
 {
@@ -26,19 +40,6 @@ extern "C" int kprintf(const char * fmt, ...)
   return n;
 }
 
-void setup() {
-	Serial1.begin(115200);
-	kprintf("\033[2J\n\r");
-	kprintf("=========================================================\n\r");
-	kprintf("arduino vidor max3421e **  %s %s\n\r", __DATE__, __TIME__);
-	kprintf("=========================================================\n\r");
-
-	usb_init();
-}
-
-void loop() {
-	usb_poll();
-}
 
 __attribute__((naked)) void HardFault_Handler(void)
 {
@@ -106,7 +107,7 @@ extern "C" void PrintExceptionInfo(unsigned long* stack)
  }
 }
 
-void kprintmem(const uint8_t* memory, uint32_t size)
+extern "C" void kprintmem(const uint8_t* memory, uint32_t size)
 {
   uint32_t i, j, len;
   char format[150];
