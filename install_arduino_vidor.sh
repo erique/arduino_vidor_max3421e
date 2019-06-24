@@ -35,7 +35,7 @@ fi
 # if not already cached, download and install arduino IDE
 if [ ! -f "$ARDUINO_PATH/arduino" ]; then
   echo -ne "${ORANGE}DOWNLOADING... \n${LCYAN}"
-  curl -f -# https://downloads.arduino.cc/arduino-${ARDUINO_IDE_VERSION}-linux64.tar.xz -o arduino.tar.xz
+  curl -f -# https://downloads.arduino.cc/arduino-${ARDUINO_IDE_VERSION}-linux64.tar.xz -o arduino.tar.xz 2>&1
   echo -ne "${ORANGE}                    DOWNLOADED "
   if [ $? -ne 0 ]; then echo -ne "${FAIL_MSG} "; else echo -ne "${PASS_MSG} "; fi
   echo -ne "${ORANGE}UNPACKING... "
