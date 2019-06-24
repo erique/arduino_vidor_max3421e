@@ -1,0 +1,13 @@
+language: c
+sudo: false
+cache:
+  directories:
+    - .arduino
+install:
+  - source ./install_arduino_vidor.sh
+script:
+  - arduino --verify arduino_vidor_max3421e/arduino_vidor_max3421e.ino
+notifications:
+  email:
+    on_success: change
+    on_failure: change
