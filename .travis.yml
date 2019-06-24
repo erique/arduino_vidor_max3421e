@@ -1,10 +1,18 @@
 language: c
-sudo: false
+sudo: true
 cache:
   directories:
     - .arduino
 install:
   - source ./install_arduino_vidor.sh
+  # Arduino IDE adds a lot of noise caused by network traffic, trying to firewall it off
+  # (see https://github.com/per1234/arduino-ci-script/issues/1 )
+  - sudo iptables -P INPUT DROP
+  - sudo iptables -P FORWARD DROP
+  - sudo iptables -P OUTPUT ACCEPT
+  - sudo iptables -A INPUT -i lo -j ACCEPT
+  - sudo iptables -A OUTPUT -o lo -j ACCEPT
+  - sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 script:
   - arduino --verify arduino_vidor_max3421e/arduino_vidor_max3421e.ino
 notifications:
