@@ -8,20 +8,26 @@ GRAY='\033[1;30m'; RED='\033[0;31m'; LRED='\033[1;31m'; GREEN='\033[0;32m'; LGRE
 FAIL_MSG="""$LRED""ERROR!"
 PASS_MSG="""$LGREEN""OK!"
 
-export ARDUINO_IDE_VERSION="1.8.9"
-export ARDUINO_SAMD_VERSION="1.8.1"
 export ARDUINO_PATH="$PWD/.arduino"
+export ARDUINO_IDE_VERSION="1.8.9"
+export ARDUINO_PACKAGE="arduino"
+export ARDUINO_PLATFORM="samd"
+export ARDUINO_BOARD="mkrvidor4000"
+export ARDUINO_BOARD_URL="http://downloads.arduino.cc/packages/package_staging_index.json"
+export ARDUINO_BOARD_FULL="${ARDUINO_PACKAGE}:${ARDUINO_PLATFORM}:${ARDUINO_BOARD}"
+export ARDUINO_BOARD_VERSION="1.8.1"
+export ARDUINO_PACKAGE_NAME="${ARDUINO_PACKAGE}:${ARDUINO_PLATFORM}:${ARDUINO_BOARD_VERSION}"
 
 echo -e "${LGRAY}\n########################################################################";
 echo -e "${YELLOW}INSTALLING ARDUINO IDE"
 echo -e "${LGRAY}########################################################################";
 
-
-echo -e "${LGRAY}ARDUINO_IDE_VERSION = ${ORANGE}${ARDUINO_IDE_VERSION}"
-echo -e "${LGRAY}ARDUINO_PATH        = ${ORANGE}${ARDUINO_PATH}"
+echo -e "${LGRAY}ARDUINO_PATH         = ${ORANGE}${ARDUINO_PATH}"
+echo -e "${LGRAY}ARDUINO_IDE_VERSION  = ${ORANGE}${ARDUINO_IDE_VERSION}"
+echo -e "${LGRAY}ARDUINO_BOARD_URL    = ${ORANGE}${ARDUINO_BOARD_URL}"
+echo -e "${LGRAY}ARDUINO_BOARD_FULL   = ${ORANGE}${ARDUINO_BOARD_FULL}"
+echo -e "${LGRAY}ARDUINO_PACKAGE_NAME = ${ORANGE}${ARDUINO_PACKAGE_NAME}"
 echo -e "${LGRAY}########################################################################";
-
-# http://downloads.arduino.cc/arduino-${ARDUINO_IDE_VERSION}-linux64.tar.xz
 
 echo -ne "${LGRAY}ARDUINO IDE STATUS: "
 
@@ -38,7 +44,7 @@ if [ ! -f "$ARDUINO_PATH/arduino" ]; then
   curl -f -# http://downloads.arduino.cc/arduino-${ARDUINO_IDE_VERSION}-linux64.tar.xz -o arduino.tar.xz 2>&1
   RET=$?
   echo -ne "${ORANGE}                    DOWNLOADED "
-  if [ $RET -ne 0 ]; then echo -ne "${FAIL_MSG}"; else echo -ne "${PASS_MSG}"; fi
+  if [ $RET -ne 0 ]; then echo -ne "${FAIL_MSG} "; else echo -ne "${PASS_MSG} "; fi
   echo -ne "${ORANGE}UNPACKING... "
   [ ! -d "$ARDUINO_PATH/" ] && mkdir "$ARDUINO_PATH"
   tar xf arduino.tar.xz -C "$ARDUINO_PATH/" --strip-components=1
@@ -56,24 +62,40 @@ mkdir -p "$ARDUINO_PATH/portable"
 export PATH="$ARDUINO_PATH:$PATH"
 
 echo -e "${LGRAY}\n########################################################################";
-echo -e "${YELLOW}INSTALLING MKRVIDOR4000"
+echo -e "${YELLOW}INSTALLING ${ARDUINO_BOARD_FULL} (${ARDUINO_BOARD_VERSION})"
 echo -e "${LGRAY}########################################################################";
 
 echo -ne "${LGRAY}ADD BOARD URL: "
-BOARD_URL_OUTPUT=$(arduino --pref "boardsmanager.additional.urls=http://downloads.arduino.cc/packages/package_staging_index.json" --save-prefs 2>&1)
-if [ $? -ne 0 ]; then echo -e "${FAIL_MSG}"; else echo -e "${PASS_MSG}"; fi
+BOARD_URL_OUTPUT=$(arduino --get-pref boardsmanager.additional.urls 2>/dev/null)
+if [ x"${BOARD_URL_OUTPUT}" != x"${ARDUINO_BOARD_URL}" ]; then
+  echo -ne "${ORANGE}${ARDUINO_BOARD_URL} "
+  BOARD_URL_OUTPUT=$(arduino --pref "boardsmanager.additional.urls=${ARDUINO_BOARD_URL}" --save-prefs 2>&1)
+  if [ $? -ne 0 ]; then echo -e "${FAIL_MSG}"; else echo -e "${PASS_MSG}"; fi
+else
+  echo -e "${ORANGE}CACHED ${PASS_MSG}"
+fi
 
 echo -ne "${LGRAY}INSTALLING BOARD: "
-if [ ! -d "$ARDUINO_PATH/portable/packages/arduino/hardware/samd/${ARDUINO_SAMD_VERSION}" ]; then
-  DEPENDENCY_OUTPUT=$(arduino --install-boards arduino:samd 2>&1)
+VERSION_OUTPUT=$(basename `arduino --get-pref runtime.platform.path 2>/dev/null`)
+if [ x"${VERSION_OUTPUT}" != x"${ARDUINO_BOARD_VERSION}" ]; then
+  echo -ne "${ORANGE}${ARDUINO_PACKAGE_NAME} "
+  INSTALL_BOARD=$(arduino --install-boards ${ARDUINO_PACKAGE_NAME} 2>&1)
   if [ $? -ne 0 ]; then echo -e "${FAIL_MSG}"; else echo -e "${PASS_MSG}"; fi
 else
   echo -e "${ORANGE}CACHED ${PASS_MSG}"
 fi
 
 echo -ne "${LGRAY}SWITCHING BOARD: "
-SWITCH_OUTPUT=$(arduino --board arduino:samd:mkrvidor4000 --save-prefs 2>&1)
-if [ $? -ne 0 ]; then echo -e "${FAIL_MSG}"; else echo -e "${PASS_MSG}"; fi
+PACKAGE_OUTPUT=$(arduino --get-pref target_package 2>/dev/null)
+PLATFORM_OUTPUT=$(arduino --get-pref target_platform 2>/dev/null)
+BOARD_OUTPUT=$(arduino --get-pref board 2>/dev/null)
+if [ x"${PACKAGE_OUTPUT}:${PLATFORM_OUTPUT}:${BOARD_OUTPUT}" != x"${ARDUINO_BOARD_FULL}" ]; then
+  echo -ne "${ORANGE}${ARDUINO_BOARD_FULL} "
+  BOARD_OUTPUT=$(arduino --board ${ARDUINO_BOARD_FULL} --save-prefs 2>&1)
+  if [ $? -ne 0 ]; then echo -e "${FAIL_MSG}"; else echo -e "${PASS_MSG}"; fi
+else
+  echo -e "${ORANGE}CACHED ${PASS_MSG}"
+fi
 
 echo -e "${LGRAY}\n########################################################################";
 echo -e "${YELLOW}DONE!"
